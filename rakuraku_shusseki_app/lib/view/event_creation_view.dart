@@ -32,21 +32,46 @@ class EventCreationView extends StatelessWidget {
               },
             ),
             const SizedBox(height: 40),
-            TextField(
-              decoration: InputDecoration(
-                labelText: '実施日を入力',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade700),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: '実施日を入力',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade700),
+                      ),
+                    ),
+                    readOnly: true,
+                    onTap: () {
+                      debugPrint('DatePickerを表示させる');
+                    },
+                    onTapOutside: (_) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
+                  ),
                 ),
-              ),
-              readOnly: true,
-              onTap: () {
-                debugPrint('DatePickerを表示させる');
-              },
-              onTapOutside: (_) {
-                FocusManager.instance.primaryFocus?.unfocus();
-              },
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: '開始時刻を入力',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade700),
+                      ),
+                    ),
+                    readOnly: true,
+                    onTap: () {
+                      debugPrint('DateTimePickerを表示させる');
+                    },
+                    onTapOutside: (_) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    },
+                  ),
+                ),
+              ],
             ),
             const Spacer(),
             SizedBox(
