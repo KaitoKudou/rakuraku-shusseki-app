@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view.dart';
 
 class EventCreationView extends StatefulWidget {
   const EventCreationView({super.key});
@@ -50,6 +51,7 @@ class _EventCreationViewState extends State<EventCreationView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'イベント作成',
           style: TextStyle(color: Colors.white),
@@ -124,7 +126,14 @@ class _EventCreationViewState extends State<EventCreationView> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AttendeeListView(),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade600,
                   shape: RoundedRectangleBorder(
