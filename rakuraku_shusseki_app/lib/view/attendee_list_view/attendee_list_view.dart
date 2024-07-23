@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/filter_options.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/popup_filter_menu_button_view.dart';
 
 class Attendee {
   final String name;
   late String status;
 
   Attendee({required this.name, required this.status});
+}
+
+enum EditStatus {
+  newcomer,
+  modification,
 }
 
 class AttendeeListView extends StatefulWidget {
@@ -15,17 +22,91 @@ class AttendeeListView extends StatefulWidget {
 }
 
 class _AttendeeListViewState extends State<AttendeeListView> {
+  FilterOptions? _selectedFilter;
   final List<Attendee> attendees = [
     Attendee(name: '山田花子', status: '出席'),
-    Attendee(name: '山田花子', status: '欠席'),
+    Attendee(name: '鈴木花子', status: '欠席'),
     Attendee(name: '山田太郎', status: '出席'),
     Attendee(name: '鈴木次郎', status: '欠席'),
   ];
+  final TextEditingController _controller = TextEditingController();
+  final ValueNotifier<bool> _isAddMemberButtonEnabled = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _isAddMemberButtonEnabled.dispose();
+    super.dispose();
+  }
 
   void _updateStatus(int index, String status) {
     setState(() {
       attendees[index].status = status;
     });
+  }
+
+  void _filterAttendees(FilterOptions? filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  }
+
+  Future<void> _showAddMemberDialog(EditStatus editStatus) async {
+    _controller.addListener(() {
+      _isAddMemberButtonEnabled.value = _controller.text.isNotEmpty;
+    });
+
+    final String title = switch (editStatus) {
+      EditStatus.newcomer => 'メンバー追加',
+      EditStatus.modification => '名前を変更',
+    };
+    final String message = switch (editStatus) {
+      EditStatus.newcomer => '追加したい人の名前を入力してください。',
+      EditStatus.modification => '変更したい名前を入力してください。',
+    };
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(message),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _controller,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('キャンセル'),
+              onPressed: () {
+                _controller.text = '';
+                Navigator.of(context).pop();
+              },
+            ),
+            ValueListenableBuilder<bool>(
+              valueListenable: _isAddMemberButtonEnabled,
+              builder: (context, isEnabled, child) {
+                return TextButton(
+                  onPressed: isEnabled
+                      ? () {
+                          // メンバー追加のロジック
+                          _controller.text = '';
+                          Navigator.of(context).pop();
+                        }
+                      : null,
+                  child: const Text('追加'),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -41,16 +122,14 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         ),
         backgroundColor: Colors.green.shade600,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              debugPrint('フィルター処理を実行');
-            },
+          PopupFilterMenuButtonView(
+            selectedFilter: _selectedFilter,
+            onSelected: _filterAttendees,
           ),
           IconButton(
             icon: const Icon(Icons.person_add),
             onPressed: () {
-              debugPrint('参加者追加処理を実行');
+              _showAddMemberDialog(EditStatus.newcomer);
             },
           ),
         ],
@@ -97,6 +176,11 @@ class _AttendeeListViewState extends State<AttendeeListView> {
                     ),
                   ],
                 ),
+                onTap: () {
+                  debugPrint('${attendee.name}さんの氏名を変更するダイアログを表示');
+                  _controller.text = attendee.name;
+                  _showAddMemberDialog(EditStatus.modification);
+                },
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),

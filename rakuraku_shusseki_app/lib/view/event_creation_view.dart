@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rakuraku_shusseki_app/view/attendee_list_view.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 
 class EventCreationView extends StatefulWidget {
   const EventCreationView({super.key});
