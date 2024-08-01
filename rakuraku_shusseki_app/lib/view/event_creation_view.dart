@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
+import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 
 class EventCreationView extends StatefulWidget {
-  const EventCreationView({super.key});
+  const EventCreationView({super.key, required this.isar});
+  final Isar isar;
 
   @override
   State<EventCreationView> createState() => _EventCreationViewState();
 }
 
 class _EventCreationViewState extends State<EventCreationView> {
+  final TextEditingController _eventTitleController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
 
   @override
   void dispose() {
+    _eventTitleController.dispose();
     _dateController.dispose();
     _timeController.dispose();
     super.dispose();
@@ -47,24 +52,28 @@ class _EventCreationViewState extends State<EventCreationView> {
     }
   }
 
+  Future<void> _createEvent() async {
+    final event = Event()
+      ..eventTitle = _eventTitleController.text
+      ..effectiveDate = _dateController.text
+      ..startTime = _timeController.text;
+
+    await widget.isar.writeTxn(() async {
+      await widget.isar.events.put(event);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'イベント作成',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.green.shade600,
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 24),
+            const SizedBox(height: 64),
             TextField(
+              controller: _eventTitleController,
               decoration: InputDecoration(
                 labelText: 'イベント名を入力',
                 border: OutlineInputBorder(
@@ -77,56 +86,62 @@ class _EventCreationViewState extends State<EventCreationView> {
               },
             ),
             const SizedBox(height: 40),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _dateController,
-                    decoration: InputDecoration(
-                      labelText: '実施日を入力',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade700),
+            Center(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _dateController,
+                      decoration: InputDecoration(
+                        labelText: '実施日を入力',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade700),
+                        ),
                       ),
+                      readOnly: true,
+                      onTap: () {
+                        debugPrint('DatePickerを表示させる');
+                        _selectDate(context);
+                      },
+                      onTapOutside: (_) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                      },
                     ),
-                    readOnly: true,
-                    onTap: () {
-                      debugPrint('DatePickerを表示させる');
-                      _selectDate(context);
-                    },
-                    onTapOutside: (_) {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                    },
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: _timeController,
-                    decoration: InputDecoration(
-                      labelText: '開始時刻を入力',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade700),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: _timeController,
+                      decoration: InputDecoration(
+                        labelText: '開始時刻を入力',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade700),
+                        ),
                       ),
+                      readOnly: true,
+                      onTap: () {
+                        debugPrint('DateTimePickerを表示させる');
+                        _selectTime(context);
+                      },
+                      onTapOutside: (_) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                      },
                     ),
-                    readOnly: true,
-                    onTap: () {
-                      debugPrint('DateTimePickerを表示させる');
-                      _selectTime(context);
-                    },
-                    onTapOutside: (_) {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const Spacer(),
-            SizedBox(
-              width: double.infinity,
+            Center(
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  _createEvent();
+
+                  // モーダルを閉じてから、参加者一覧画面に遷移する
+                  Navigator.pop(context);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -139,6 +154,7 @@ class _EventCreationViewState extends State<EventCreationView> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  fixedSize: const Size(240, double.infinity),
                 ),
                 child: const Text(
                   'イベントを作成',
@@ -150,7 +166,6 @@ class _EventCreationViewState extends State<EventCreationView> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),
