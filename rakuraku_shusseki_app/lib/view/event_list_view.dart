@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/main.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 import 'package:rakuraku_shusseki_app/view/event_creation_view.dart';
 
 class EventListView extends StatefulWidget {
@@ -68,7 +69,18 @@ class _EventListViewState extends State<EventListView> with RouteAware {
               ListTile(
                 title: Text(event.eventTitle ?? ''),
                 subtitle: Text('${event.effectiveDate}  ${event.startTime}'),
-                onTap: () {},
+                onTap: () {
+                  // 参加者一覧画面に遷移
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AttendeeListView(
+                        event: event,
+                        isar: widget.isar,
+                      ),
+                    ),
+                  );
+                },
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
