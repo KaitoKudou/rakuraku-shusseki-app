@@ -1024,12 +1024,7 @@ int _attendeeEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  {
-    final value = object.name;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.name.length * 3;
   return bytesCount;
 }
 
@@ -1050,7 +1045,7 @@ Attendee _attendeeDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Attendee();
-  object.name = reader.readStringOrNull(offsets[0]);
+  object.name = reader.readString(offsets[0]);
   object.status =
       _AttendeestatusValueEnumMap[reader.readByteOrNull(offsets[1])] ??
           Status.attending;
@@ -1065,7 +1060,7 @@ P _attendeeDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 1:
       return (_AttendeestatusValueEnumMap[reader.readByteOrNull(offset)] ??
           Status.attending) as P;
@@ -1085,24 +1080,8 @@ const _AttendeestatusValueEnumMap = {
 
 extension AttendeeQueryFilter
     on QueryBuilder<Attendee, Attendee, QFilterCondition> {
-  QueryBuilder<Attendee, Attendee, QAfterFilterCondition> nameIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'name',
-      ));
-    });
-  }
-
-  QueryBuilder<Attendee, Attendee, QAfterFilterCondition> nameIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'name',
-      ));
-    });
-  }
-
   QueryBuilder<Attendee, Attendee, QAfterFilterCondition> nameEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1115,7 +1094,7 @@ extension AttendeeQueryFilter
   }
 
   QueryBuilder<Attendee, Attendee, QAfterFilterCondition> nameGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1130,7 +1109,7 @@ extension AttendeeQueryFilter
   }
 
   QueryBuilder<Attendee, Attendee, QAfterFilterCondition> nameLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -1145,8 +1124,8 @@ extension AttendeeQueryFilter
   }
 
   QueryBuilder<Attendee, Attendee, QAfterFilterCondition> nameBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,

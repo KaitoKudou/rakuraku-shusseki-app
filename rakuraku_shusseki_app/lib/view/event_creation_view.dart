@@ -15,6 +15,7 @@ class _EventCreationViewState extends State<EventCreationView> {
   final TextEditingController _eventTitleController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
+  late Event event = Event();
 
   @override
   void dispose() {
@@ -53,7 +54,7 @@ class _EventCreationViewState extends State<EventCreationView> {
   }
 
   Future<void> _createEvent() async {
-    final event = Event()
+    event
       ..eventTitle = _eventTitleController.text
       ..effectiveDate = _dateController.text
       ..startTime = _timeController.text;
@@ -145,7 +146,10 @@ class _EventCreationViewState extends State<EventCreationView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const AttendeeListView(),
+                      builder: (context) => AttendeeListView(
+                        event: event,
+                        isar: widget.isar,
+                      ),
                     ),
                   );
                 },
