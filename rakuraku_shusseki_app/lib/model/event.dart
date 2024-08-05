@@ -13,7 +13,7 @@ class Event {
 
 @embedded
 class Attendee {
-  String? name;
+  late String name;
 
   @enumerated
   Status status = Status.attending;
