@@ -16,7 +16,7 @@ class Attendee {
   late String name;
 
   @enumerated
-  Status status = Status.attending;
+  late Status status;
 }
 
 enum Status {
