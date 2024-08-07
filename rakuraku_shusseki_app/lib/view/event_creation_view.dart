@@ -147,7 +147,7 @@ class _EventCreationViewState extends State<EventCreationView> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AttendeeListView(
-                        event: event,
+                        eventId: event.id,
                         isar: widget.isar,
                       ),
                     ),

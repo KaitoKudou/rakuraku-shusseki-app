@@ -18,8 +18,8 @@ class _EventListViewState extends State<EventListView> with RouteAware {
 
   @override
   void initState() {
-    super.initState();
     loadEventsData();
+    super.initState();
   }
 
   @override
@@ -27,7 +27,6 @@ class _EventListViewState extends State<EventListView> with RouteAware {
     super.didChangeDependencies();
     // RouteAwareを使用してRouteObserverを登録
     routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
-    super.didChangeDependencies();
   }
 
   @override
@@ -75,7 +74,7 @@ class _EventListViewState extends State<EventListView> with RouteAware {
                     context,
                     MaterialPageRoute(
                       builder: (context) => AttendeeListView(
-                        event: event,
+                        eventId: event.id,
                         isar: widget.isar,
                       ),
                     ),
