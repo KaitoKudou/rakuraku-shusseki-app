@@ -5,16 +5,13 @@ import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/filter_options.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/popup_filter_menu_button_view.dart';
-
-enum EditStatus {
-  newcomer,
-  modification,
-}
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_add_dialog.dart.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_name_change_dialog.dart';
 
 class AttendeeListView extends StatefulWidget {
-  AttendeeListView({super.key, required this.event, required this.isar});
+  AttendeeListView({super.key, required this.eventId, required this.isar});
   final Isar isar;
-  Event event;
+  int eventId;
 
   @override
   State<AttendeeListView> createState() => _AttendeeListViewState();
@@ -22,8 +19,7 @@ class AttendeeListView extends StatefulWidget {
 
 class _AttendeeListViewState extends State<AttendeeListView> {
   FilterOptions? _selectedFilter;
-  final TextEditingController _controller = TextEditingController();
-  final ValueNotifier<bool> _isAddMemberButtonEnabled = ValueNotifier(false);
+  late Event event = Event();
 
   @override
   void initState() {
@@ -31,21 +27,14 @@ class _AttendeeListViewState extends State<AttendeeListView> {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _isAddMemberButtonEnabled.dispose();
-    super.dispose();
-  }
-
   // 出欠状況を変更
   Future<void> _updateAttendeeStatus(int index, Status status) async {
     setState(() {
-      widget.event.attendee![index].status = status;
+      event.attendee![index].status = status;
     });
 
     await widget.isar.writeTxn(() async {
-      await widget.isar.events.put(widget.event);
+      await widget.isar.events.put(event);
     });
   }
 
@@ -57,100 +46,44 @@ class _AttendeeListViewState extends State<AttendeeListView> {
 
   // データベースから参加者データを取得
   Future<void> loadAttendeesData() async {
-    final data = await widget.isar.events
-        .filter()
-        .idEqualTo(widget.event.id)
-        .findFirst();
+    final data =
+        await widget.isar.events.filter().idEqualTo(widget.eventId).findFirst();
     setState(() {
       if (data != null) {
-        widget.event = data;
+        event = data;
       }
     });
   }
 
   // 参加者をデータベースに追加するメソッド
-  Future<void> _addAttendeeToEvent() async {
-    widget.event.attendee ??= [];
+  Future<void> _addAttendeeToEvent(Attendee newAttendee) async {
+    event.attendee ??= [];
 
     // 現在のリストを可変リストに変換
     // Isarでは可変長配列は扱えない
-    List<Attendee> mutableAttendeeList = List.from(widget.event.attendee!);
-
-    Attendee newAttendee = Attendee()
-      ..name = _controller.text
-      ..status = Status.attending;
-
+    List<Attendee> mutableAttendeeList = List.from(event.attendee!);
     mutableAttendeeList.insert(0, newAttendee);
 
     setState(() {
-      widget.event.attendee = mutableAttendeeList;
+      event.attendee = mutableAttendeeList;
     });
-
-    _controller.text = '';
 
     await widget.isar.writeTxn(
       () async {
-        await widget.isar.events.put(widget.event);
+        await widget.isar.events.put(event);
       },
     );
   }
 
-  Future<void> _showAddMemberDialog(EditStatus editStatus) async {
-    _controller.addListener(() {
-      _isAddMemberButtonEnabled.value = _controller.text.isNotEmpty;
+  // 参加者の氏名を変更しデータベースを更新
+  Future<void> _changeAttendeeName(int index, String newName) async {
+    setState(() {
+      event.attendee![index].name = newName;
     });
 
-    final String title = switch (editStatus) {
-      EditStatus.newcomer => 'メンバー追加',
-      EditStatus.modification => '名前を変更',
-    };
-    final String message = switch (editStatus) {
-      EditStatus.newcomer => '追加したい人の名前を入力してください。',
-      EditStatus.modification => '変更したい名前を入力してください。',
-    };
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(message),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _controller,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () {
-                _controller.text = '';
-                Navigator.of(context).pop();
-              },
-            ),
-            ValueListenableBuilder<bool>(
-              valueListenable: _isAddMemberButtonEnabled,
-              builder: (context, isEnabled, child) {
-                return TextButton(
-                  onPressed: isEnabled
-                      ? () async {
-                          await _addAttendeeToEvent();
-                          // ignore: use_build_context_synchronously
-                          Navigator.of(context).pop();
-                        }
-                      : null,
-                  child: const Text('追加'),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
+    await widget.isar.writeTxn(() async {
+      await widget.isar.events.put(event);
+    });
   }
 
   @override
@@ -161,9 +94,9 @@ class _AttendeeListViewState extends State<AttendeeListView> {
 
     Widget attendeeListView() {
       return ListView.builder(
-        itemCount: widget.event.attendee!.length,
+        itemCount: event.attendee!.length,
         itemBuilder: (context, index) {
-          final attendee = widget.event.attendee![index];
+          final attendee = event.attendee![index];
           return Column(
             children: [
               ListTile(
@@ -203,9 +136,17 @@ class _AttendeeListViewState extends State<AttendeeListView> {
                   ],
                 ),
                 onTap: () {
-                  debugPrint('${attendee.name}さんの氏名を変更するダイアログを表示');
-                  _controller.text = attendee.name;
-                  _showAddMemberDialog(EditStatus.modification);
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AttendeeNameChangeDialog(
+                        previousName: attendee.name,
+                        updateAttendeeToEvent: (newName) async {
+                          await _changeAttendeeName(index, newName);
+                        },
+                      );
+                    },
+                  );
                 },
               ),
               Padding(
@@ -227,7 +168,7 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Center(
           child: Text(
-            '${widget.event.eventTitle}',
+            '${event.eventTitle}',
             style: const TextStyle(color: Colors.white),
           ),
         ),
@@ -240,13 +181,23 @@ class _AttendeeListViewState extends State<AttendeeListView> {
           IconButton(
             icon: const Icon(Icons.person_add),
             onPressed: () {
-              _showAddMemberDialog(EditStatus.newcomer);
+              loadAttendeesData();
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AttendeeAddDialog(
+                    addAttendeeToEvent: (newAttendee) async {
+                      await _addAttendeeToEvent(newAttendee);
+                    },
+                  );
+                },
+              );
             },
           ),
         ],
       ),
       body: Center(
-        child: widget.event.attendee == null ? emptyView() : attendeeListView(),
+        child: event.attendee == null ? emptyView() : attendeeListView(),
       ),
     );
   }
