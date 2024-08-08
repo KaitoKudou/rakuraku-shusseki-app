@@ -3,8 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
-import 'package:rakuraku_shusseki_app/view/attendee_list_view/filter_options.dart';
-import 'package:rakuraku_shusseki_app/view/attendee_list_view/popup_filter_menu_button_view.dart';
+import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/popup_filter_menu_button_view.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_add_dialog.dart.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_name_change_dialog.dart';
 
@@ -18,8 +17,9 @@ class AttendeeListView extends StatefulWidget {
 }
 
 class _AttendeeListViewState extends State<AttendeeListView> {
-  FilterOptions? _selectedFilter;
-  late Event event = Event();
+  Status? _selectedStatus;
+  late Event allEvent = Event();
+  late Event filteredEvent = Event();
 
   @override
   void initState() {
@@ -28,19 +28,37 @@ class _AttendeeListViewState extends State<AttendeeListView> {
   }
 
   // 出欠状況を変更
-  Future<void> _updateAttendeeStatus(int index, Status status) async {
-    setState(() {
-      event.attendee![index].status = status;
-    });
+  Future<void> _updateAttendeeStatus(
+      {required Attendee target, required Status newStatus}) async {
+    final index =
+        allEvent.attendee.indexWhere((attendee) => attendee == target);
 
-    await widget.isar.writeTxn(() async {
-      await widget.isar.events.put(event);
-    });
+    // indexWhereはマッチしなければ -1 を返す
+    if (index != -1) {
+      setState(() {
+        allEvent.attendee[index].status = newStatus;
+      });
+
+      await widget.isar.writeTxn(() async {
+        await widget.isar.events.put(allEvent);
+      });
+    }
   }
 
-  void _filterAttendees(FilterOptions? filter) {
+  // 指定された条件で参加者を絞り込み
+  void _filterAttendees(Status? selected) {
+    final filteredAttendees = allEvent.attendee.where(
+      (attendee) {
+        return attendee.status == selected;
+      },
+    ).toList();
+
     setState(() {
-      _selectedFilter = filter;
+      _selectedStatus = selected;
+
+      if (selected != null) {
+        filteredEvent.attendee = filteredAttendees;
+      }
     });
   }
 
@@ -50,40 +68,52 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         await widget.isar.events.filter().idEqualTo(widget.eventId).findFirst();
     setState(() {
       if (data != null) {
-        event = data;
+        allEvent = data;
       }
     });
   }
 
   // 参加者をデータベースに追加するメソッド
   Future<void> _addAttendeeToEvent(Attendee newAttendee) async {
-    event.attendee ??= [];
-
     // 現在のリストを可変リストに変換
     // Isarでは可変長配列は扱えない
-    List<Attendee> mutableAttendeeList = List.from(event.attendee!);
-    mutableAttendeeList.insert(0, newAttendee);
+    List<Attendee> mutableAllAttendeeList = List.from(allEvent.attendee);
+    mutableAllAttendeeList.insert(0, newAttendee);
 
     setState(() {
-      event.attendee = mutableAttendeeList;
+      allEvent.attendee = mutableAllAttendeeList;
     });
 
     await widget.isar.writeTxn(
       () async {
-        await widget.isar.events.put(event);
+        await widget.isar.events.put(allEvent);
       },
     );
+
+    _filterAttendees(_selectedStatus);
   }
 
   // 参加者の氏名を変更しデータベースを更新
-  Future<void> _changeAttendeeName(int index, String newName) async {
-    setState(() {
-      event.attendee![index].name = newName;
-    });
+  Future<void> _changeAttendeeName(
+      {required String previousName, required String newName}) async {
+    final indexForAllEvent = allEvent.attendee
+        .indexWhere((attendee) => attendee.name == previousName);
+    final indexForFilteredEvent = filteredEvent.attendee
+        .indexWhere((attendee) => attendee.name == previousName);
 
-    await widget.isar.writeTxn(() async {
-      await widget.isar.events.put(event);
-    });
+    // indexWhereはマッチしなければ -1 を返す
+    if (indexForAllEvent != -1 || indexForFilteredEvent != -1) {
+      setState(() {
+        allEvent.attendee[indexForAllEvent].name = newName;
+        if (_selectedStatus != null) {
+          filteredEvent.attendee[indexForFilteredEvent].name = newName;
+        }
+      });
+
+      await widget.isar.writeTxn(() async {
+        await widget.isar.events.put(allEvent);
+      });
+    }
   }
 
   @override
@@ -92,11 +122,11 @@ class _AttendeeListViewState extends State<AttendeeListView> {
       return const Text('参加者がいません');
     }
 
-    Widget attendeeListView() {
+    Widget attendeeListView(Event event) {
       return ListView.builder(
-        itemCount: event.attendee!.length,
+        itemCount: event.attendee.length,
         itemBuilder: (context, index) {
-          final attendee = event.attendee![index];
+          final attendee = event.attendee[index];
           return Column(
             children: [
               ListTile(
@@ -106,7 +136,10 @@ class _AttendeeListViewState extends State<AttendeeListView> {
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        _updateAttendeeStatus(index, Status.attending);
+                        _updateAttendeeStatus(
+                          target: attendee,
+                          newStatus: Status.attending,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: attendee.status == Status.attending
@@ -121,7 +154,10 @@ class _AttendeeListViewState extends State<AttendeeListView> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
-                        _updateAttendeeStatus(index, Status.absent);
+                        _updateAttendeeStatus(
+                          target: attendee,
+                          newStatus: Status.absent,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: attendee.status == Status.absent
@@ -142,7 +178,10 @@ class _AttendeeListViewState extends State<AttendeeListView> {
                       return AttendeeNameChangeDialog(
                         previousName: attendee.name,
                         updateAttendeeToEvent: (newName) async {
-                          await _changeAttendeeName(index, newName);
+                          await _changeAttendeeName(
+                            previousName: attendee.name,
+                            newName: newName,
+                          );
                         },
                       );
                     },
@@ -168,15 +207,17 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Center(
           child: Text(
-            '${event.eventTitle}',
+            '${allEvent.eventTitle}',
             style: const TextStyle(color: Colors.white),
           ),
         ),
         backgroundColor: Colors.green.shade600,
         actions: [
           PopupFilterMenuButtonView(
-            selectedFilter: _selectedFilter,
-            onSelected: _filterAttendees,
+            selectedFilter: _selectedStatus,
+            executeFilterAttendees: (selected) {
+              _filterAttendees(selected);
+            },
           ),
           IconButton(
             icon: const Icon(Icons.person_add),
@@ -197,7 +238,12 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         ],
       ),
       body: Center(
-        child: event.attendee == null ? emptyView() : attendeeListView(),
+        child: allEvent.attendee.isEmpty ||
+                (filteredEvent.attendee.isEmpty && _selectedStatus != null)
+            ? emptyView()
+            : attendeeListView(
+                _selectedStatus == null ? allEvent : filteredEvent,
+              ),
       ),
     );
   }
