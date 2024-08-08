@@ -8,7 +8,7 @@ class Event {
   String? eventTitle;
   String? effectiveDate;
   String? startTime;
-  List<Attendee>? attendee;
+  List<Attendee> attendee = [];
 }
 
 @embedded
