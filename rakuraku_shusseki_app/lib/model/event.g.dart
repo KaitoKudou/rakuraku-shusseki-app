@@ -59,17 +59,12 @@ int _eventEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.attendee.length * 3;
   {
-    final list = object.attendee;
-    if (list != null) {
-      bytesCount += 3 + list.length * 3;
-      {
-        final offsets = allOffsets[Attendee]!;
-        for (var i = 0; i < list.length; i++) {
-          final value = list[i];
-          bytesCount += AttendeeSchema.estimateSize(value, offsets, allOffsets);
-        }
-      }
+    final offsets = allOffsets[Attendee]!;
+    for (var i = 0; i < object.attendee.length; i++) {
+      final value = object.attendee[i];
+      bytesCount += AttendeeSchema.estimateSize(value, offsets, allOffsets);
     }
   }
   {
@@ -118,11 +113,12 @@ Event _eventDeserialize(
 ) {
   final object = Event();
   object.attendee = reader.readObjectList<Attendee>(
-    offsets[0],
-    AttendeeSchema.deserialize,
-    allOffsets,
-    Attendee(),
-  );
+        offsets[0],
+        AttendeeSchema.deserialize,
+        allOffsets,
+        Attendee(),
+      ) ??
+      [];
   object.effectiveDate = reader.readStringOrNull(offsets[1]);
   object.eventTitle = reader.readStringOrNull(offsets[2]);
   object.id = id;
@@ -139,11 +135,12 @@ P _eventDeserializeProp<P>(
   switch (propertyId) {
     case 0:
       return (reader.readObjectList<Attendee>(
-        offset,
-        AttendeeSchema.deserialize,
-        allOffsets,
-        Attendee(),
-      )) as P;
+            offset,
+            AttendeeSchema.deserialize,
+            allOffsets,
+            Attendee(),
+          ) ??
+          []) as P;
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
@@ -243,22 +240,6 @@ extension EventQueryWhere on QueryBuilder<Event, Event, QWhereClause> {
 }
 
 extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
-  QueryBuilder<Event, Event, QAfterFilterCondition> attendeeIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'attendee',
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> attendeeIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'attendee',
-      ));
-    });
-  }
-
   QueryBuilder<Event, Event, QAfterFilterCondition> attendeeLengthEqualTo(
       int length) {
     return QueryBuilder.apply(this, (query) {
@@ -964,7 +945,7 @@ extension EventQueryProperty on QueryBuilder<Event, Event, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Event, List<Attendee>?, QQueryOperations> attendeeProperty() {
+  QueryBuilder<Event, List<Attendee>, QQueryOperations> attendeeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'attendee');
     });
