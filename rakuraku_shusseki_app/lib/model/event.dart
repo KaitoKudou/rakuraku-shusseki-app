@@ -5,9 +5,9 @@ part 'event.g.dart';
 @collection
 class Event {
   Id id = Isar.autoIncrement;
-  String? eventTitle;
-  String? effectiveDate;
-  String? startTime;
+  late String eventTitle;
+  late String effectiveDate;
+  late String startTime;
   List<Attendee> attendee = [];
 }
 

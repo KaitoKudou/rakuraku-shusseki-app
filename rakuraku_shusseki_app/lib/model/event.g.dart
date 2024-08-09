@@ -67,24 +67,9 @@ int _eventEstimateSize(
       bytesCount += AttendeeSchema.estimateSize(value, offsets, allOffsets);
     }
   }
-  {
-    final value = object.effectiveDate;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
-  {
-    final value = object.eventTitle;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
-  {
-    final value = object.startTime;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.effectiveDate.length * 3;
+  bytesCount += 3 + object.eventTitle.length * 3;
+  bytesCount += 3 + object.startTime.length * 3;
   return bytesCount;
 }
 
@@ -119,10 +104,10 @@ Event _eventDeserialize(
         Attendee(),
       ) ??
       [];
-  object.effectiveDate = reader.readStringOrNull(offsets[1]);
-  object.eventTitle = reader.readStringOrNull(offsets[2]);
+  object.effectiveDate = reader.readString(offsets[1]);
+  object.eventTitle = reader.readString(offsets[2]);
   object.id = id;
-  object.startTime = reader.readStringOrNull(offsets[3]);
+  object.startTime = reader.readString(offsets[3]);
   return object;
 }
 
@@ -142,11 +127,11 @@ P _eventDeserializeProp<P>(
           ) ??
           []) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -324,24 +309,8 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> effectiveDateIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'effectiveDate',
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> effectiveDateIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'effectiveDate',
-      ));
-    });
-  }
-
   QueryBuilder<Event, Event, QAfterFilterCondition> effectiveDateEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -354,7 +323,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> effectiveDateGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -369,7 +338,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> effectiveDateLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -384,8 +353,8 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> effectiveDateBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -470,24 +439,8 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> eventTitleIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'eventTitle',
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> eventTitleIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'eventTitle',
-      ));
-    });
-  }
-
   QueryBuilder<Event, Event, QAfterFilterCondition> eventTitleEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -500,7 +453,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> eventTitleGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -515,7 +468,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> eventTitleLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -530,8 +483,8 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> eventTitleBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -668,24 +621,8 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> startTimeIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'startTime',
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> startTimeIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'startTime',
-      ));
-    });
-  }
-
   QueryBuilder<Event, Event, QAfterFilterCondition> startTimeEqualTo(
-    String? value, {
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -698,7 +635,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> startTimeGreaterThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -713,7 +650,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> startTimeLessThan(
-    String? value, {
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
@@ -728,8 +665,8 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }
 
   QueryBuilder<Event, Event, QAfterFilterCondition> startTimeBetween(
-    String? lower,
-    String? upper, {
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
@@ -951,19 +888,19 @@ extension EventQueryProperty on QueryBuilder<Event, Event, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Event, String?, QQueryOperations> effectiveDateProperty() {
+  QueryBuilder<Event, String, QQueryOperations> effectiveDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'effectiveDate');
     });
   }
 
-  QueryBuilder<Event, String?, QQueryOperations> eventTitleProperty() {
+  QueryBuilder<Event, String, QQueryOperations> eventTitleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'eventTitle');
     });
   }
 
-  QueryBuilder<Event, String?, QQueryOperations> startTimeProperty() {
+  QueryBuilder<Event, String, QQueryOperations> startTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'startTime');
     });

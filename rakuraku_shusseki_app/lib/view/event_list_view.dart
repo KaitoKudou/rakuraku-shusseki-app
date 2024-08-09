@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/main.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
@@ -63,33 +64,76 @@ class _EventListViewState extends State<EventListView> with RouteAware {
         itemCount: events.length,
         itemBuilder: (context, index) {
           final event = events[index];
-          return Column(
-            children: [
-              ListTile(
-                title: Text(event.eventTitle ?? ''),
-                subtitle: Text('${event.effectiveDate}  ${event.startTime}'),
-                onTap: () {
-                  // 参加者一覧画面に遷移
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AttendeeListView(
-                        eventId: event.id,
-                        isar: widget.isar,
+          return Slidable(
+            key: ValueKey(events[index]),
+            endActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (_) {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      clipBehavior: Clip.none,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Divider(
-                  color: Colors.grey.shade400,
-                  thickness: 1,
-                  height: 1,
+                      builder: (BuildContext context) {
+                        return Container(
+                          color: Colors.black,
+                          height: (screenSize.height * 0.7) +
+                              MediaQuery.of(context).viewInsets.bottom,
+                          child: EventCreationView(
+                            isar: widget.isar,
+                            isEventAddMode: false,
+                            editingTargetEvent: event,
+                          ),
+                        );
+                      },
+                    ).then((isUpdated) async {
+                      if (isUpdated ?? false) {
+                        await loadEventsData();
+                      }
+                    });
+                  },
+                  backgroundColor: Colors.orange.shade700,
+                  foregroundColor: Colors.white,
+                  icon: Icons.edit,
+                  label: '編集',
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  title: Text(event.eventTitle),
+                  subtitle: Text('${event.effectiveDate}  ${event.startTime}'),
+                  onTap: () {
+                    // 参加者一覧画面に遷移
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AttendeeListView(
+                          eventId: event.id,
+                          isar: widget.isar,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Divider(
+                    color: Colors.grey.shade400,
+                    thickness: 1,
+                    height: 1,
+                  ),
+                ),
+              ],
+            ),
           );
         },
       );
@@ -131,6 +175,7 @@ class _EventListViewState extends State<EventListView> with RouteAware {
                       MediaQuery.of(context).viewInsets.bottom,
                   child: EventCreationView(
                     isar: widget.isar,
+                    isEventAddMode: true,
                   ),
                 );
               },
