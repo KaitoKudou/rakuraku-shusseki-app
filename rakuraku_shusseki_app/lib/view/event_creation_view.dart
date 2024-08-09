@@ -4,8 +4,17 @@ import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 
 class EventCreationView extends StatefulWidget {
-  const EventCreationView({super.key, required this.isar});
   final Isar isar;
+  final bool isEventAddMode;
+  final Event? editingTargetEvent;
+
+  const EventCreationView({
+    super.key,
+    required this.isar,
+    required this.isEventAddMode,
+    // ignore: avoid_init_to_null
+    this.editingTargetEvent = null,
+  });
 
   @override
   State<EventCreationView> createState() => _EventCreationViewState();
@@ -16,6 +25,16 @@ class _EventCreationViewState extends State<EventCreationView> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   late Event event = Event();
+
+  @override
+  void initState() {
+    if (widget.editingTargetEvent != null) {
+      _eventTitleController.text = widget.editingTargetEvent!.eventTitle!;
+      _dateController.text = widget.editingTargetEvent!.effectiveDate!;
+      _timeController.text = widget.editingTargetEvent!.startTime!;
+    }
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -61,6 +80,16 @@ class _EventCreationViewState extends State<EventCreationView> {
 
     await widget.isar.writeTxn(() async {
       await widget.isar.events.put(event);
+    });
+  }
+
+  Future<void> _editEvent() async {
+    widget.editingTargetEvent
+      ?..eventTitle = _eventTitleController.text
+      ..effectiveDate = _dateController.text
+      ..startTime = _timeController.text;
+    await widget.isar.writeTxn(() async {
+      await widget.isar.events.put(widget.editingTargetEvent!);
     });
   }
 
@@ -138,20 +167,27 @@ class _EventCreationViewState extends State<EventCreationView> {
             Center(
               child: ElevatedButton(
                 onPressed: () async {
-                  _createEvent();
+                  final bool isEventAddMode = widget.isEventAddMode;
+
+                  // イベントの作成または編集を実行
+                  isEventAddMode ? await _createEvent() : await _editEvent();
 
                   // モーダルを閉じてから、参加者一覧画面に遷移する
-                  Navigator.pop(context);
+                  // ignore: use_build_context_synchronously
+                  Navigator.pop(context, true);
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AttendeeListView(
-                        eventId: event.id,
-                        isar: widget.isar,
+                  if (isEventAddMode) {
+                    Navigator.push(
+                      // ignore: use_build_context_synchronously
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AttendeeListView(
+                          eventId: event.id,
+                          isar: widget.isar,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade600,
@@ -160,9 +196,9 @@ class _EventCreationViewState extends State<EventCreationView> {
                   ),
                   fixedSize: const Size(240, double.infinity),
                 ),
-                child: const Text(
-                  'イベントを作成',
-                  style: TextStyle(
+                child: Text(
+                  widget.isEventAddMode ? 'イベントを作成' : 'イベントを編集',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
