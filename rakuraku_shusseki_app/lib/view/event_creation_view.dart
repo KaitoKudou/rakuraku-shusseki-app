@@ -29,9 +29,9 @@ class _EventCreationViewState extends State<EventCreationView> {
   @override
   void initState() {
     if (widget.editingTargetEvent != null) {
-      _eventTitleController.text = widget.editingTargetEvent!.eventTitle!;
-      _dateController.text = widget.editingTargetEvent!.effectiveDate!;
-      _timeController.text = widget.editingTargetEvent!.startTime!;
+      _eventTitleController.text = widget.editingTargetEvent!.eventTitle;
+      _dateController.text = widget.editingTargetEvent!.effectiveDate;
+      _timeController.text = widget.editingTargetEvent!.startTime;
     }
     super.initState();
   }

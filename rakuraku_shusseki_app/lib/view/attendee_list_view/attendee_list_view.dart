@@ -207,7 +207,7 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         iconTheme: const IconThemeData(color: Colors.white),
         title: Center(
           child: Text(
-            '${allEvent.eventTitle}',
+            allEvent.eventTitle,
             style: const TextStyle(color: Colors.white),
           ),
         ),

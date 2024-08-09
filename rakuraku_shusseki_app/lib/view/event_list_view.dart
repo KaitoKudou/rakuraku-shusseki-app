@@ -109,7 +109,7 @@ class _EventListViewState extends State<EventListView> with RouteAware {
             child: Column(
               children: [
                 ListTile(
-                  title: Text(event.eventTitle ?? ''),
+                  title: Text(event.eventTitle),
                   subtitle: Text('${event.effectiveDate}  ${event.startTime}'),
                   onTap: () {
                     // 参加者一覧画面に遷移
