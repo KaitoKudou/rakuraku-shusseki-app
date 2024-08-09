@@ -25,9 +25,14 @@ class _EventCreationViewState extends State<EventCreationView> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   late Event event = Event();
+  bool isButtonEnabled = false;
 
   @override
   void initState() {
+    _eventTitleController.addListener(_checkIfButtonShouldBeEnabled);
+    _dateController.addListener(_checkIfButtonShouldBeEnabled);
+    _timeController.addListener(_checkIfButtonShouldBeEnabled);
+
     if (widget.editingTargetEvent != null) {
       _eventTitleController.text = widget.editingTargetEvent!.eventTitle;
       _dateController.text = widget.editingTargetEvent!.effectiveDate;
@@ -42,6 +47,14 @@ class _EventCreationViewState extends State<EventCreationView> {
     _dateController.dispose();
     _timeController.dispose();
     super.dispose();
+  }
+
+  void _checkIfButtonShouldBeEnabled() {
+    setState(() {
+      isButtonEnabled = _eventTitleController.text.isNotEmpty &&
+          _dateController.text.isNotEmpty &&
+          _timeController.text.isNotEmpty;
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -91,6 +104,30 @@ class _EventCreationViewState extends State<EventCreationView> {
     await widget.isar.writeTxn(() async {
       await widget.isar.events.put(widget.editingTargetEvent!);
     });
+  }
+
+  Future<void> _handleEventOperation() async {
+    final bool isEventAddMode = widget.isEventAddMode;
+
+    // イベントの作成または編集を実行
+    isEventAddMode ? await _createEvent() : await _editEvent();
+
+    // モーダルを閉じてから、参加者一覧画面に遷移する
+    // ignore: use_build_context_synchronously
+    Navigator.pop(context, true);
+
+    if (isEventAddMode) {
+      Navigator.push(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(
+          builder: (context) => AttendeeListView(
+            eventId: event.id,
+            isar: widget.isar,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -166,29 +203,11 @@ class _EventCreationViewState extends State<EventCreationView> {
             const Spacer(),
             Center(
               child: ElevatedButton(
-                onPressed: () async {
-                  final bool isEventAddMode = widget.isEventAddMode;
-
-                  // イベントの作成または編集を実行
-                  isEventAddMode ? await _createEvent() : await _editEvent();
-
-                  // モーダルを閉じてから、参加者一覧画面に遷移する
-                  // ignore: use_build_context_synchronously
-                  Navigator.pop(context, true);
-
-                  if (isEventAddMode) {
-                    Navigator.push(
-                      // ignore: use_build_context_synchronously
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AttendeeListView(
-                          eventId: event.id,
-                          isar: widget.isar,
-                        ),
-                      ),
-                    );
-                  }
-                },
+                onPressed: isButtonEnabled
+                    ? () async {
+                        await _handleEventOperation();
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade600,
                   shape: RoundedRectangleBorder(
