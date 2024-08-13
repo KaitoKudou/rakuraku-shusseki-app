@@ -50,6 +50,40 @@ class _EventListViewState extends State<EventListView> with RouteAware {
     });
   }
 
+  // データベースからイベントを削除
+  Future<void> deleteEvent({required Event event}) async {
+    await widget.isar.writeTxn(() async {
+      await widget.isar.events.delete(event.id);
+    });
+
+    await loadEventsData();
+  }
+
+  // イベント削除確認ダイアログ
+  Future<void> showDeleteConfirmationDialog({required Event event}) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('イベントを削除しますか？'),
+          actions: [
+            TextButton(
+              child: const Text('キャンセル'),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: const Text('削除'),
+              onPressed: () {
+                deleteEvent(event: event);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 画面のサイズを取得
@@ -103,6 +137,15 @@ class _EventListViewState extends State<EventListView> with RouteAware {
                   foregroundColor: Colors.white,
                   icon: Icons.edit,
                   label: '編集',
+                ),
+                SlidableAction(
+                  onPressed: (_) {
+                    showDeleteConfirmationDialog(event: event);
+                  },
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete,
+                  label: '削除',
                 ),
               ],
             ),
