@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:isar/isar.dart';
-import 'package:rakuraku_shusseki_app/main.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
+import 'package:rakuraku_shusseki_app/provider/event_state_notifier.dart';
+import 'package:rakuraku_shusseki_app/provider/route_observer_provider.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 import 'package:rakuraku_shusseki_app/view/event_creation_view.dart';
 
-class EventListView extends StatefulWidget {
+class EventListView extends ConsumerStatefulWidget {
   const EventListView({super.key, required this.isar});
   final Isar isar;
 
   @override
-  State<EventListView> createState() => _EventListViewState();
+  ConsumerState createState() => _EventListViewState();
 }
 
-class _EventListViewState extends State<EventListView> with RouteAware {
-  List<Event> events = [];
-
+class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
   @override
   void initState() {
-    loadEventsData();
+    ref.read(eventStateNotifierProvider.notifier).loadEventsData();
     super.initState();
   }
 
@@ -27,36 +27,21 @@ class _EventListViewState extends State<EventListView> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // RouteAwareを使用してRouteObserverを登録
+    final routeObserver = ref.read(routeObserverProvider);
     routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
   }
 
   @override
   void didPopNext() {
     // 画面が再表示されたときにデータを再読み込み
-    loadEventsData();
+    ref.read(eventStateNotifierProvider.notifier).loadEventsData();
   }
 
   @override
   void dispose() {
+    final routeObserver = ref.read(routeObserverProvider);
     routeObserver.unsubscribe(this);
     super.dispose();
-  }
-
-  //データベースのデータを取得
-  Future<void> loadEventsData() async {
-    final data = await widget.isar.events.where().findAll();
-    setState(() {
-      events = data;
-    });
-  }
-
-  // データベースからイベントを削除
-  Future<void> deleteEvent({required Event event}) async {
-    await widget.isar.writeTxn(() async {
-      await widget.isar.events.delete(event.id);
-    });
-
-    await loadEventsData();
   }
 
   // イベント削除確認ダイアログ
@@ -74,7 +59,9 @@ class _EventListViewState extends State<EventListView> with RouteAware {
             TextButton(
               child: const Text('削除'),
               onPressed: () {
-                deleteEvent(event: event);
+                ref
+                    .read(eventStateNotifierProvider.notifier)
+                    .deleteEvent(event: event);
                 Navigator.pop(context);
               },
             ),
@@ -86,6 +73,8 @@ class _EventListViewState extends State<EventListView> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    final events = ref.watch(eventStateNotifierProvider); // イベントのリストを監視
+
     // 画面のサイズを取得
     Size screenSize = MediaQuery.sizeOf(context);
 
@@ -129,7 +118,9 @@ class _EventListViewState extends State<EventListView> with RouteAware {
                       },
                     ).then((isUpdated) async {
                       if (isUpdated ?? false) {
-                        await loadEventsData();
+                        await ref
+                            .read(eventStateNotifierProvider.notifier)
+                            .loadEventsData();
                       }
                     });
                   },

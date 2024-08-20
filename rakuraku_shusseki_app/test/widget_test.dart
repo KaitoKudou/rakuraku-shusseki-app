@@ -13,8 +13,7 @@ import 'package:rakuraku_shusseki_app/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    final isar = await openIsar();
-    await tester.pumpWidget(MyApp(isar: isar));
+    await tester.pumpWidget(const MyApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
