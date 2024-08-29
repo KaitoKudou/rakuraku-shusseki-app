@@ -7,7 +7,7 @@ part of 'event_state_notifier.dart';
 // **************************************************************************
 
 String _$eventStateNotifierHash() =>
-    r'a21e5978522cdf868c077de026ae350d68eeaae3';
+    r'b1b41b027096a87fbdb70eed985ec6deb0df6bc3';
 
 /// See also [EventStateNotifier].
 @ProviderFor(EventStateNotifier)
