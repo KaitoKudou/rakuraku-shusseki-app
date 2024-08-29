@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
-import 'package:rakuraku_shusseki_app/provider/add_member_button_enabled_notifier.dart';
+import 'package:rakuraku_shusseki_app/provider/member_button_enabled_notifier.dart';
 
 class AttendeeAddDialog extends ConsumerStatefulWidget {
   final Future<void> Function(Attendee newAttendee) addAttendeeToEvent;
@@ -22,7 +22,7 @@ class _AttendeeAddDialogState extends ConsumerState<AttendeeAddDialog> {
   void initState() {
     _controller.addListener(() {
       ref
-          .watch(addMemberButtonEnabledNotifierProvider.notifier)
+          .watch(memberButtonEnabledNotifierProvider.notifier)
           .updateButtonEnable(isOn: _controller.text.isNotEmpty);
     });
     super.initState();
@@ -38,7 +38,7 @@ class _AttendeeAddDialogState extends ConsumerState<AttendeeAddDialog> {
   Widget build(BuildContext context) {
     const String title = 'メンバー追加';
     const String message = '追加したい人の名前を入力してください。';
-    final isButtonEnabled = ref.watch(addMemberButtonEnabledNotifierProvider);
+    final isButtonEnabled = ref.watch(memberButtonEnabledNotifierProvider);
 
     return AlertDialog(
       title: const Text(title),
