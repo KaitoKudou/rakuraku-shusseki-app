@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rakuraku_shusseki_app/provider/member_button_enabled_notifier.dart';
 
-class AttendeeNameChangeDialog extends StatefulWidget {
+class AttendeeNameChangeDialog extends ConsumerStatefulWidget {
   final String previousName;
   final Future<void> Function(String newName) updateAttendeeToEvent;
 
@@ -11,20 +13,21 @@ class AttendeeNameChangeDialog extends StatefulWidget {
   });
 
   @override
-  State<AttendeeNameChangeDialog> createState() =>
-      _AttendeeNameChangeDialogState();
+  ConsumerState createState() => _AttendeeNameChangeDialogState();
 }
 
-class _AttendeeNameChangeDialogState extends State<AttendeeNameChangeDialog> {
+class _AttendeeNameChangeDialogState
+    extends ConsumerState<AttendeeNameChangeDialog> {
   final TextEditingController _controller = TextEditingController();
-  final ValueNotifier<bool> _isAddMemberButtonEnabled = ValueNotifier(false);
 
   @override
   void initState() {
     _controller.text = widget.previousName;
 
     _controller.addListener(() {
-      _isAddMemberButtonEnabled.value = _controller.text.isNotEmpty;
+      ref
+          .watch(memberButtonEnabledNotifierProvider.notifier)
+          .updateButtonEnable(isOn: _controller.text.isNotEmpty);
     });
     super.initState();
   }
@@ -32,7 +35,6 @@ class _AttendeeNameChangeDialogState extends State<AttendeeNameChangeDialog> {
   @override
   void dispose() {
     _controller.dispose();
-    _isAddMemberButtonEnabled.dispose();
     super.dispose();
   }
 
@@ -40,6 +42,7 @@ class _AttendeeNameChangeDialogState extends State<AttendeeNameChangeDialog> {
   Widget build(BuildContext context) {
     const String title = '名前を変更';
     const String message = '変更したい名前を入力してください。';
+    final isButtonEnabled = ref.watch(memberButtonEnabledNotifierProvider);
 
     return AlertDialog(
       title: const Text(title),
@@ -61,20 +64,15 @@ class _AttendeeNameChangeDialogState extends State<AttendeeNameChangeDialog> {
             Navigator.of(context).pop();
           },
         ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _isAddMemberButtonEnabled,
-          builder: (context, isEnabled, child) {
-            return TextButton(
-              onPressed: isEnabled
-                  ? () async {
-                      await widget.updateAttendeeToEvent(_controller.text);
-                      // ignore: use_build_context_synchronously
-                      Navigator.of(context).pop();
-                    }
-                  : null,
-              child: const Text('変更'),
-            );
-          },
+        TextButton(
+          onPressed: isButtonEnabled
+              ? () async {
+                  await widget.updateAttendeeToEvent(_controller.text);
+                  // ignore: use_build_context_synchronously
+                  Navigator.of(context).pop();
+                }
+              : null,
+          child: const Text('変更'),
         ),
       ],
     );
