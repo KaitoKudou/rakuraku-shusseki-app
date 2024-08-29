@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
+import 'package:rakuraku_shusseki_app/provider/event_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 
-class EventCreationView extends StatefulWidget {
-  final Isar isar;
+class EventCreationView extends ConsumerStatefulWidget {
   final bool isEventAddMode;
   final Event? editingTargetEvent;
 
   const EventCreationView({
     super.key,
-    required this.isar,
     required this.isEventAddMode,
     // ignore: avoid_init_to_null
     this.editingTargetEvent = null,
   });
 
   @override
-  State<EventCreationView> createState() => _EventCreationViewState();
+  ConsumerState createState() => _EventCreationViewState();
 }
 
-class _EventCreationViewState extends State<EventCreationView> {
+class _EventCreationViewState extends ConsumerState<EventCreationView> {
   final TextEditingController _eventTitleController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
@@ -85,32 +84,27 @@ class _EventCreationViewState extends State<EventCreationView> {
     }
   }
 
-  Future<void> _createEvent() async {
-    event
-      ..eventTitle = _eventTitleController.text
-      ..effectiveDate = _dateController.text
-      ..startTime = _timeController.text;
-
-    await widget.isar.writeTxn(() async {
-      await widget.isar.events.put(event);
-    });
-  }
-
-  Future<void> _editEvent() async {
-    widget.editingTargetEvent
-      ?..eventTitle = _eventTitleController.text
-      ..effectiveDate = _dateController.text
-      ..startTime = _timeController.text;
-    await widget.isar.writeTxn(() async {
-      await widget.isar.events.put(widget.editingTargetEvent!);
-    });
-  }
-
   Future<void> _handleEventOperation() async {
     final bool isEventAddMode = widget.isEventAddMode;
+    final title = _eventTitleController.text;
+    final date = _dateController.text;
+    final time = _timeController.text;
+    final eventStateNotifier = ref.read(eventStateNotifierProvider.notifier);
+    late int eventId;
 
     // イベントの作成または編集を実行
-    isEventAddMode ? await _createEvent() : await _editEvent();
+    isEventAddMode
+        ? eventId = await eventStateNotifier.createEvent(
+            title: title,
+            date: date,
+            time: time,
+          )
+        : await eventStateNotifier.editEvent(
+            event: widget.editingTargetEvent!,
+            title: title,
+            date: date,
+            time: time,
+          );
 
     // モーダルを閉じてから、参加者一覧画面に遷移する
     // ignore: use_build_context_synchronously
@@ -122,8 +116,7 @@ class _EventCreationViewState extends State<EventCreationView> {
         context,
         MaterialPageRoute(
           builder: (context) => AttendeeListView(
-            eventId: event.id,
-            isar: widget.isar,
+            eventId: eventId,
           ),
         ),
       );
