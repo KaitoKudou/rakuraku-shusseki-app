@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/event_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/provider/route_observer_provider.dart';
@@ -9,8 +8,7 @@ import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view
 import 'package:rakuraku_shusseki_app/view/event_creation_view.dart';
 
 class EventListView extends ConsumerStatefulWidget {
-  const EventListView({super.key, required this.isar});
-  final Isar isar;
+  const EventListView({super.key});
 
   @override
   ConsumerState createState() => _EventListViewState();
@@ -19,8 +17,13 @@ class EventListView extends ConsumerStatefulWidget {
 class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
   @override
   void initState() {
-    ref.read(eventStateNotifierProvider.notifier).loadEventsData();
+    initialize();
     super.initState();
+  }
+
+  Future<void> initialize() async {
+    await ref.read(eventStateNotifierProvider.notifier).initialize();
+    await ref.read(eventStateNotifierProvider.notifier).loadEventsData();
   }
 
   @override
@@ -110,7 +113,6 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
                           height: (screenSize.height * 0.7) +
                               MediaQuery.of(context).viewInsets.bottom,
                           child: EventCreationView(
-                            isar: widget.isar,
                             isEventAddMode: false,
                             editingTargetEvent: event,
                           ),
@@ -152,7 +154,6 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
                       MaterialPageRoute(
                         builder: (context) => AttendeeListView(
                           eventId: event.id,
-                          isar: widget.isar,
                         ),
                       ),
                     );
@@ -207,8 +208,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
                   color: Colors.black,
                   height: (screenSize.height * 0.7) +
                       MediaQuery.of(context).viewInsets.bottom,
-                  child: EventCreationView(
-                    isar: widget.isar,
+                  child: const EventCreationView(
                     isEventAddMode: true,
                   ),
                 );

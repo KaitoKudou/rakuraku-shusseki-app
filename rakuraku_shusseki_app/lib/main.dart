@@ -26,7 +26,7 @@ class MyApp extends ConsumerWidget {
     return isarAsyncValue.when(
       data: (isar) {
         return MaterialApp(
-          home: EventListView(isar: isar),
+          home: const EventListView(),
           navigatorObservers: [routeObserver],
         );
       },
