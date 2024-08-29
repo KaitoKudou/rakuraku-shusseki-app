@@ -1,22 +1,23 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
+import 'package:rakuraku_shusseki_app/provider/isar_provider.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/popup_filter_menu_button_view.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_add_dialog.dart.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_name_change_dialog.dart';
 
-class AttendeeListView extends StatefulWidget {
-  AttendeeListView({super.key, required this.eventId, required this.isar});
-  final Isar isar;
+class AttendeeListView extends ConsumerStatefulWidget {
+  AttendeeListView({super.key, required this.eventId});
   int eventId;
 
   @override
-  State<AttendeeListView> createState() => _AttendeeListViewState();
+  ConsumerState createState() => _AttendeeListViewState();
 }
 
-class _AttendeeListViewState extends State<AttendeeListView> {
+class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
   Status? _selectedStatus;
   late Event allEvent = Event();
   late Event filteredEvent = Event();
@@ -30,6 +31,7 @@ class _AttendeeListViewState extends State<AttendeeListView> {
   // 出欠状況を変更
   Future<void> _updateAttendeeStatus(
       {required Attendee target, required Status newStatus}) async {
+    final isar = await ref.read(isarProvider.future);
     final index =
         allEvent.attendee.indexWhere((attendee) => attendee == target);
 
@@ -39,8 +41,8 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         allEvent.attendee[index].status = newStatus;
       });
 
-      await widget.isar.writeTxn(() async {
-        await widget.isar.events.put(allEvent);
+      await isar.writeTxn(() async {
+        await isar.events.put(allEvent);
       });
     }
   }
@@ -64,8 +66,9 @@ class _AttendeeListViewState extends State<AttendeeListView> {
 
   // データベースから参加者データを取得
   Future<void> loadAttendeesData() async {
+    final isar = await ref.read(isarProvider.future);
     final data =
-        await widget.isar.events.filter().idEqualTo(widget.eventId).findFirst();
+        await isar.events.filter().idEqualTo(widget.eventId).findFirst();
     setState(() {
       if (data != null) {
         allEvent = data;
@@ -78,15 +81,16 @@ class _AttendeeListViewState extends State<AttendeeListView> {
     // 現在のリストを可変リストに変換
     // Isarでは可変長配列は扱えない
     List<Attendee> mutableAllAttendeeList = List.from(allEvent.attendee);
+    final isar = await ref.read(isarProvider.future);
     mutableAllAttendeeList.insert(0, newAttendee);
 
     setState(() {
       allEvent.attendee = mutableAllAttendeeList;
     });
 
-    await widget.isar.writeTxn(
+    await isar.writeTxn(
       () async {
-        await widget.isar.events.put(allEvent);
+        await isar.events.put(allEvent);
       },
     );
 
@@ -96,6 +100,7 @@ class _AttendeeListViewState extends State<AttendeeListView> {
   // 参加者の氏名を変更しデータベースを更新
   Future<void> _changeAttendeeName(
       {required String previousName, required String newName}) async {
+    final isar = await ref.read(isarProvider.future);
     final indexForAllEvent = allEvent.attendee
         .indexWhere((attendee) => attendee.name == previousName);
     final indexForFilteredEvent = filteredEvent.attendee
@@ -110,8 +115,8 @@ class _AttendeeListViewState extends State<AttendeeListView> {
         }
       });
 
-      await widget.isar.writeTxn(() async {
-        await widget.isar.events.put(allEvent);
+      await isar.writeTxn(() async {
+        await isar.events.put(allEvent);
       });
     }
   }
