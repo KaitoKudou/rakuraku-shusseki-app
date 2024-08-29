@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
+import 'package:rakuraku_shusseki_app/provider/add_member_button_enabled_notifier.dart';
 
-class AttendeeAddDialog extends StatefulWidget {
+class AttendeeAddDialog extends ConsumerStatefulWidget {
   final Future<void> Function(Attendee newAttendee) addAttendeeToEvent;
 
   const AttendeeAddDialog({
@@ -10,17 +12,18 @@ class AttendeeAddDialog extends StatefulWidget {
   });
 
   @override
-  State<AttendeeAddDialog> createState() => _AttendeeAddDialogState();
+  ConsumerState createState() => _AttendeeAddDialogState();
 }
 
-class _AttendeeAddDialogState extends State<AttendeeAddDialog> {
+class _AttendeeAddDialogState extends ConsumerState<AttendeeAddDialog> {
   final TextEditingController _controller = TextEditingController();
-  final ValueNotifier<bool> _isAddMemberButtonEnabled = ValueNotifier(false);
 
   @override
   void initState() {
     _controller.addListener(() {
-      _isAddMemberButtonEnabled.value = _controller.text.isNotEmpty;
+      ref
+          .watch(addMemberButtonEnabledNotifierProvider.notifier)
+          .updateButtonEnable(isOn: _controller.text.isNotEmpty);
     });
     super.initState();
   }
@@ -28,7 +31,6 @@ class _AttendeeAddDialogState extends State<AttendeeAddDialog> {
   @override
   void dispose() {
     _controller.dispose();
-    _isAddMemberButtonEnabled.dispose();
     super.dispose();
   }
 
@@ -36,6 +38,7 @@ class _AttendeeAddDialogState extends State<AttendeeAddDialog> {
   Widget build(BuildContext context) {
     const String title = 'メンバー追加';
     const String message = '追加したい人の名前を入力してください。';
+    final isButtonEnabled = ref.watch(addMemberButtonEnabledNotifierProvider);
 
     return AlertDialog(
       title: const Text(title),
@@ -57,23 +60,18 @@ class _AttendeeAddDialogState extends State<AttendeeAddDialog> {
             Navigator.of(context).pop();
           },
         ),
-        ValueListenableBuilder<bool>(
-          valueListenable: _isAddMemberButtonEnabled,
-          builder: (context, isEnabled, child) {
-            return TextButton(
-              onPressed: isEnabled
-                  ? () async {
-                      Attendee newAttendee = Attendee()
-                        ..name = _controller.text
-                        ..status = Status.attending;
-                      await widget.addAttendeeToEvent(newAttendee);
-                      // ignore: use_build_context_synchronously
-                      Navigator.of(context).pop();
-                    }
-                  : null,
-              child: const Text('追加'),
-            );
-          },
+        TextButton(
+          onPressed: isButtonEnabled
+              ? () async {
+                  Attendee newAttendee = Attendee()
+                    ..name = _controller.text
+                    ..status = Status.attending;
+                  await widget.addAttendeeToEvent(newAttendee);
+                  // ignore: use_build_context_synchronously
+                  Navigator.of(context).pop();
+                }
+              : null,
+          child: const Text('追加'),
         ),
       ],
     );
