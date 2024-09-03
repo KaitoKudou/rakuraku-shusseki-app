@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
+import 'package:rakuraku_shusseki_app/provider/selected_filter_state_notifier.dart';
 
-class PopupFilterMenuButtonView extends StatefulWidget {
-  final Status? selectedFilter;
-  final Function(Status? selected) executeFilterAttendees;
+class PopupFilterMenuButtonView extends ConsumerStatefulWidget {
+  final void Function() executeFilterAttendees;
 
   const PopupFilterMenuButtonView({
-    required this.selectedFilter,
     required this.executeFilterAttendees,
     super.key,
   });
 
   @override
-  State<PopupFilterMenuButtonView> createState() =>
-      _PopupFilterMenuButtonView();
+  ConsumerState createState() => _PopupFilterMenuButtonView();
 }
 
-class _PopupFilterMenuButtonView extends State<PopupFilterMenuButtonView> {
-  late Status? _selectedFilter;
-
+class _PopupFilterMenuButtonView
+    extends ConsumerState<PopupFilterMenuButtonView> {
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final initStatus = ref.read(selectedFilterStateNotifierProvider);
+      ref
+          .read(selectedFilterStateNotifierProvider.notifier)
+          .initialize(status: initStatus);
+    });
     super.initState();
-    _selectedFilter = widget.selectedFilter;
   }
 
   void _onSelected(Status filter) {
-    setState(() {
-      if (_selectedFilter == filter) {
-        _selectedFilter = null; // 同じ選択肢を再度タップした場合、選択状態を解除する
-      } else {
-        _selectedFilter = filter;
-      }
-    });
-    widget.executeFilterAttendees(_selectedFilter);
+    ref.read(selectedFilterStateNotifierProvider.notifier).onSelected(filter);
+    widget.executeFilterAttendees();
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedStatus = ref.watch(selectedFilterStateNotifierProvider);
     return PopupMenuButton<Status>(
       icon: const Icon(Icons.filter_list),
       onSelected: _onSelected,
@@ -47,10 +45,10 @@ class _PopupFilterMenuButtonView extends State<PopupFilterMenuButtonView> {
           child: Text(
             '出席',
             style: TextStyle(
-              fontWeight: _selectedFilter == Status.attending
+              fontWeight: selectedStatus == Status.attending
                   ? FontWeight.bold
                   : FontWeight.normal,
-              color: _selectedFilter == Status.attending
+              color: selectedStatus == Status.attending
                   ? Colors.green.shade600
                   : Colors.grey.shade400,
             ),
@@ -61,10 +59,10 @@ class _PopupFilterMenuButtonView extends State<PopupFilterMenuButtonView> {
           child: Text(
             '欠席',
             style: TextStyle(
-              fontWeight: _selectedFilter == Status.absent
+              fontWeight: selectedStatus == Status.absent
                   ? FontWeight.bold
                   : FontWeight.normal,
-              color: _selectedFilter == Status.absent
+              color: selectedStatus == Status.absent
                   ? Colors.green.shade600
                   : Colors.grey.shade400,
             ),
