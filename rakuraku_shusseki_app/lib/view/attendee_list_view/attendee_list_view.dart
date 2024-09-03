@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/isar_provider.dart';
+import 'package:rakuraku_shusseki_app/provider/selected_filter_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/popup_filter_menu_button_view.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_add_dialog.dart.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/widget/attendee_name_change_dialog.dart';
@@ -18,7 +19,6 @@ class AttendeeListView extends ConsumerStatefulWidget {
 }
 
 class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
-  Status? _selectedStatus;
   late Event allEvent = Event();
   late Event filteredEvent = Event();
 
@@ -48,17 +48,16 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
   }
 
   // 指定された条件で参加者を絞り込み
-  void _filterAttendees(Status? selected) {
+  void _filterAttendees() {
+    final selectedStatus = ref.read(selectedFilterStateNotifierProvider);
     final filteredAttendees = allEvent.attendee.where(
       (attendee) {
-        return attendee.status == selected;
+        return attendee.status == selectedStatus;
       },
     ).toList();
 
     setState(() {
-      _selectedStatus = selected;
-
-      if (selected != null) {
+      if (selectedStatus != null) {
         filteredEvent.attendee = filteredAttendees;
       }
     });
@@ -94,7 +93,7 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       },
     );
 
-    _filterAttendees(_selectedStatus);
+    _filterAttendees();
   }
 
   // 参加者の氏名を変更しデータベースを更新
@@ -105,12 +104,13 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
         .indexWhere((attendee) => attendee.name == previousName);
     final indexForFilteredEvent = filteredEvent.attendee
         .indexWhere((attendee) => attendee.name == previousName);
+    final status = ref.read(selectedFilterStateNotifierProvider);
 
     // indexWhereはマッチしなければ -1 を返す
     if (indexForAllEvent != -1 || indexForFilteredEvent != -1) {
       setState(() {
         allEvent.attendee[indexForAllEvent].name = newName;
-        if (_selectedStatus != null) {
+        if (status != null) {
           filteredEvent.attendee[indexForFilteredEvent].name = newName;
         }
       });
@@ -123,6 +123,8 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
 
   @override
   Widget build(BuildContext context) {
+    final status = ref.read(selectedFilterStateNotifierProvider);
+
     Widget emptyView() {
       return const Text('参加者がいません');
     }
@@ -219,9 +221,8 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
         backgroundColor: Colors.green.shade600,
         actions: [
           PopupFilterMenuButtonView(
-            selectedFilter: _selectedStatus,
-            executeFilterAttendees: (selected) {
-              _filterAttendees(selected);
+            executeFilterAttendees: () {
+              _filterAttendees();
             },
           ),
           IconButton(
@@ -244,10 +245,10 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
       ),
       body: Center(
         child: allEvent.attendee.isEmpty ||
-                (filteredEvent.attendee.isEmpty && _selectedStatus != null)
+                (filteredEvent.attendee.isEmpty && status != null)
             ? emptyView()
             : attendeeListView(
-                _selectedStatus == null ? allEvent : filteredEvent,
+                status == null ? allEvent : filteredEvent,
               ),
       ),
     );
