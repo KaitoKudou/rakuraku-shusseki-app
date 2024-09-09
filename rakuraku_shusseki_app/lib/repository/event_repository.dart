@@ -6,7 +6,7 @@ class EventRepository {
 
   EventRepository({required this.isar});
 
-  Future<int> createEvent({
+  Future<Event> createEvent({
     required String title,
     required String date,
     required String time,
@@ -20,7 +20,7 @@ class EventRepository {
       await isar.events.put(event);
     });
 
-    return event.id;
+    return event;
   }
 
   Future<void> editEvent({
