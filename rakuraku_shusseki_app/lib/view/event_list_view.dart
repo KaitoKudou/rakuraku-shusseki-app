@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
-import 'package:rakuraku_shusseki_app/provider/event_state_notifier.dart';
+import 'package:rakuraku_shusseki_app/provider/event_list_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/provider/route_observer_provider.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 import 'package:rakuraku_shusseki_app/view/event_creation_view.dart';
@@ -22,8 +22,8 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
   }
 
   Future<void> initialize() async {
-    await ref.read(eventStateNotifierProvider.notifier).initialize();
-    await ref.read(eventStateNotifierProvider.notifier).loadEventsData();
+    await ref.read(eventListStateNotifierProvider.notifier).initialize();
+    await ref.read(eventListStateNotifierProvider.notifier).loadEventsData();
   }
 
   @override
@@ -37,7 +37,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
   @override
   void didPopNext() {
     // 画面が再表示されたときにデータを再読み込み
-    ref.read(eventStateNotifierProvider.notifier).loadEventsData();
+    ref.read(eventListStateNotifierProvider.notifier).loadEventsData();
   }
 
   @override
@@ -63,7 +63,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
               child: const Text('削除'),
               onPressed: () {
                 ref
-                    .read(eventStateNotifierProvider.notifier)
+                    .read(eventListStateNotifierProvider.notifier)
                     .deleteEvent(event: event);
                 Navigator.pop(context);
               },
@@ -76,7 +76,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(eventStateNotifierProvider); // イベントのリストを監視
+    final events = ref.watch(eventListStateNotifierProvider); // イベントのリストを監視
 
     // 画面のサイズを取得
     Size screenSize = MediaQuery.sizeOf(context);
@@ -121,7 +121,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
                     ).then((isUpdated) async {
                       if (isUpdated ?? false) {
                         await ref
-                            .read(eventStateNotifierProvider.notifier)
+                            .read(eventListStateNotifierProvider.notifier)
                             .loadEventsData();
                       }
                     });
@@ -153,7 +153,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
                       context,
                       MaterialPageRoute(
                         builder: (context) => AttendeeListView(
-                          eventId: event.id,
+                          event: event,
                         ),
                       ),
                     );

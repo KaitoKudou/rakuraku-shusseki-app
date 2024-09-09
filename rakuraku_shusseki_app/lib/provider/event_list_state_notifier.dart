@@ -3,10 +3,10 @@ import 'package:rakuraku_shusseki_app/provider/isar_provider.dart';
 import 'package:rakuraku_shusseki_app/repository/event_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'event_state_notifier.g.dart';
+part 'event_list_state_notifier.g.dart';
 
 @riverpod
-class EventStateNotifier extends _$EventStateNotifier {
+class EventListStateNotifier extends _$EventListStateNotifier {
   late EventRepository _eventRepository;
 
   @override
@@ -32,7 +32,7 @@ class EventStateNotifier extends _$EventStateNotifier {
   }
 
   // イベントを新規作成して、データベースに保存
-  Future<int> createEvent({
+  Future<Event> createEvent({
     required String title,
     required String date,
     required String time,
