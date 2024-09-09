@@ -4,7 +4,7 @@ import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/selected_filter_state_notifier.dart';
 
 class PopupFilterMenuButtonView extends ConsumerStatefulWidget {
-  final void Function() executeFilterAttendees;
+  final Future<void> Function() executeFilterAttendees;
 
   const PopupFilterMenuButtonView({
     required this.executeFilterAttendees,
