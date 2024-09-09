@@ -7,7 +7,7 @@ part of 'selected_filter_state_notifier.dart';
 // **************************************************************************
 
 String _$selectedFilterStateNotifierHash() =>
-    r'04f214ccde80efaf76fddfd107ecd7aa20e58734';
+    r'e4e1269f20d48e97c6eb05037e361d89565e6324';
 
 /// See also [SelectedFilterStateNotifier].
 @ProviderFor(SelectedFilterStateNotifier)
