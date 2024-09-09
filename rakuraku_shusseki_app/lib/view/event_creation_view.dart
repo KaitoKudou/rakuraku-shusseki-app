@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
-import 'package:rakuraku_shusseki_app/provider/event_state_notifier.dart';
+import 'package:rakuraku_shusseki_app/provider/event_list_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
 
 class EventCreationView extends ConsumerStatefulWidget {
@@ -23,7 +23,6 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
   final TextEditingController _eventTitleController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
-  late Event event = Event();
   bool isButtonEnabled = false;
 
   @override
@@ -89,12 +88,13 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
     final title = _eventTitleController.text;
     final date = _dateController.text;
     final time = _timeController.text;
-    final eventStateNotifier = ref.read(eventStateNotifierProvider.notifier);
-    late int eventId;
+    final eventStateNotifier =
+        ref.read(eventListStateNotifierProvider.notifier);
+    late Event createdEvent;
 
     // イベントの作成または編集を実行
     isEventAddMode
-        ? eventId = await eventStateNotifier.createEvent(
+        ? createdEvent = await eventStateNotifier.createEvent(
             title: title,
             date: date,
             time: time,
@@ -116,7 +116,7 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
         context,
         MaterialPageRoute(
           builder: (context) => AttendeeListView(
-            eventId: eventId,
+            event: createdEvent,
           ),
         ),
       );
