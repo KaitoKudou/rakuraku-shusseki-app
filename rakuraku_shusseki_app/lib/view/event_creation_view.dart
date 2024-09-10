@@ -1,8 +1,16 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/event_list_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
+
+class AlwaysDisabledFocusNode extends FocusNode {
+  @override
+  bool get hasFocus => false;
+}
 
 class EventCreationView extends ConsumerStatefulWidget {
   final bool isEventAddMode;
@@ -56,30 +64,82 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-    if (picked != null && picked != DateTime.now()) {
-      setState(() {
-        _dateController.text = "${picked.year}/${picked.month}/${picked.day}";
-      });
+    if (Platform.isIOS) {
+      await showCupertinoModalPopup(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.width / 1.5,
+            color: Colors.white,
+            child: CupertinoDatePicker(
+              initialDateTime: DateTime.now(),
+              minimumYear: 2000,
+              maximumYear: 2101,
+              mode: CupertinoDatePickerMode.date,
+              backgroundColor: Colors.white,
+              onDateTimeChanged: (dateTime) {
+                setState(() {
+                  _dateController.text =
+                      "${dateTime.year}/${dateTime.month}/${dateTime.day}";
+                });
+              },
+            ),
+          );
+        },
+      );
+    } else {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2101),
+      );
+      if (picked != null && picked != DateTime.now()) {
+        setState(() {
+          _dateController.text = "${picked.year}/${picked.month}/${picked.day}";
+        });
+      }
     }
   }
 
   Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        final formattedTime =
-            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-        _timeController.text = formattedTime;
-      });
+    if (Platform.isIOS) {
+      await showCupertinoModalPopup(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.width / 1.5,
+            color: Colors.white,
+            child: CupertinoDatePicker(
+              initialDateTime: DateTime.now(),
+              mode: CupertinoDatePickerMode.time,
+              use24hFormat: true,
+              backgroundColor: Colors.white,
+              onDateTimeChanged: (dateTime) {
+                setState(() {
+                  final formattedTime =
+                      "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+                  _timeController.text = formattedTime;
+                });
+              },
+            ),
+          );
+        },
+      );
+    } else {
+      final TimeOfDay? picked = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+      if (picked != null) {
+        setState(() {
+          final formattedTime =
+              "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+          _timeController.text = formattedTime;
+        });
+      }
     }
   }
 
@@ -132,63 +192,121 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 64),
-            TextField(
-              controller: _eventTitleController,
-              decoration: InputDecoration(
-                labelText: 'イベント名を入力',
-                border: OutlineInputBorder(
+            if (Platform.isIOS)
+              CupertinoTextField(
+                controller: _eventTitleController,
+                placeholder: 'イベント名を入力',
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade700),
+                  border: Border.all(
+                    color: Colors.grey.shade400,
+                  ),
                 ),
+                onTapOutside: (_) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
               ),
-              onTapOutside: (_) {
-                FocusManager.instance.primaryFocus?.unfocus();
-              },
-            ),
+            if (!Platform.isIOS)
+              TextField(
+                controller: _eventTitleController,
+                decoration: InputDecoration(
+                  labelText: 'イベント名を入力',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade400),
+                  ),
+                ),
+                onTapOutside: (_) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+              ),
             const SizedBox(height: 40),
             Center(
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _dateController,
-                      decoration: InputDecoration(
-                        labelText: '実施日を入力',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade700),
-                        ),
-                      ),
-                      readOnly: true,
-                      onTap: () {
-                        debugPrint('DatePickerを表示させる');
-                        _selectDate(context);
-                      },
-                      onTapOutside: (_) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                      },
-                    ),
+                    child: Platform.isIOS
+                        ? CupertinoTextField(
+                            controller: _dateController,
+                            focusNode: AlwaysDisabledFocusNode(),
+                            placeholder: '実施日を入力',
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                            onTap: () {
+                              debugPrint('DatePickerを表示させる');
+                              _selectDate(context);
+                            },
+                            onTapOutside: (_) {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                            },
+                          )
+                        : TextField(
+                            controller: _dateController,
+                            focusNode: AlwaysDisabledFocusNode(),
+                            decoration: InputDecoration(
+                              labelText: '実施日を入力',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade700),
+                              ),
+                            ),
+                            readOnly: true,
+                            onTap: () {
+                              debugPrint('DatePickerを表示させる');
+                              _selectDate(context);
+                            },
+                            onTapOutside: (_) {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                            },
+                          ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextField(
-                      controller: _timeController,
-                      decoration: InputDecoration(
-                        labelText: '開始時刻を入力',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade700),
-                        ),
-                      ),
-                      readOnly: true,
-                      onTap: () {
-                        debugPrint('DateTimePickerを表示させる');
-                        _selectTime(context);
-                      },
-                      onTapOutside: (_) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                      },
-                    ),
+                    child: Platform.isIOS
+                        ? CupertinoTextField(
+                            controller: _timeController,
+                            focusNode: AlwaysDisabledFocusNode(),
+                            placeholder: '開始時刻を入力',
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                            onTap: () {
+                              debugPrint('DateTimePickerを表示させる');
+                              _selectTime(context);
+                              (context);
+                            },
+                            onTapOutside: (_) {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                            },
+                          )
+                        : TextField(
+                            controller: _timeController,
+                            focusNode: AlwaysDisabledFocusNode(),
+                            decoration: InputDecoration(
+                              labelText: '開始時刻を入力',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade700),
+                              ),
+                            ),
+                            readOnly: true,
+                            onTap: () {
+                              debugPrint('DateTimePickerを表示させる');
+                              _selectTime(context);
+                            },
+                            onTapOutside: (_) {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                            },
+                          ),
                   ),
                 ],
               ),
