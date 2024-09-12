@@ -8,7 +8,7 @@ import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/event_list_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/provider/route_observer_provider.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
-import 'package:rakuraku_shusseki_app/view/event_creation_view.dart';
+import 'package:rakuraku_shusseki_app/view/event_creation_view/event_creation_view.dart';
 
 class EventListView extends ConsumerStatefulWidget {
   const EventListView({super.key});
