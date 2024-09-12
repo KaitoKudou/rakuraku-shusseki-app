@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/event_list_state_notifier.dart';
+import 'package:rakuraku_shusseki_app/utils/date_time_picker_utils.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
+import 'package:rakuraku_shusseki_app/view/event_creation_view/widget/date_text_field.dart';
+import 'package:rakuraku_shusseki_app/view/event_creation_view/widget/event_title_text_field.dart';
+import 'package:rakuraku_shusseki_app/view/event_creation_view/widget/time_text_field.dart';
 
 class EventCreationView extends ConsumerStatefulWidget {
   final bool isEventAddMode;
@@ -56,31 +60,28 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+    await showDatePickerDialog(
+      context,
+      (dateTime) {
+        setState(() {
+          _dateController.text =
+              "${dateTime.year}/${dateTime.month}/${dateTime.day}";
+        });
+      },
     );
-    if (picked != null && picked != DateTime.now()) {
-      setState(() {
-        _dateController.text = "${picked.year}/${picked.month}/${picked.day}";
-      });
-    }
   }
 
   Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
+    await showTimePickerDialog(
+      context,
+      (dateTime) {
+        setState(() {
+          final formattedTime =
+              "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+          _timeController.text = formattedTime;
+        });
+      },
     );
-    if (picked != null) {
-      setState(() {
-        final formattedTime =
-            "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-        _timeController.text = formattedTime;
-      });
-    }
   }
 
   Future<void> _handleEventOperation() async {
@@ -132,62 +133,22 @@ class _EventCreationViewState extends ConsumerState<EventCreationView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 64),
-            TextField(
-              controller: _eventTitleController,
-              decoration: InputDecoration(
-                labelText: 'イベント名を入力',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade700),
-                ),
-              ),
-              onTapOutside: (_) {
-                FocusManager.instance.primaryFocus?.unfocus();
-              },
-            ),
+            EventTitleTextField(controller: _eventTitleController),
             const SizedBox(height: 40),
             Center(
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: DateTextField(
                       controller: _dateController,
-                      decoration: InputDecoration(
-                        labelText: '実施日を入力',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade700),
-                        ),
-                      ),
-                      readOnly: true,
-                      onTap: () {
-                        debugPrint('DatePickerを表示させる');
-                        _selectDate(context);
-                      },
-                      onTapOutside: (_) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                      },
+                      onTap: () => _selectDate(context),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: TextField(
+                    child: TimeTextField(
                       controller: _timeController,
-                      decoration: InputDecoration(
-                        labelText: '開始時刻を入力',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey.shade700),
-                        ),
-                      ),
-                      readOnly: true,
-                      onTap: () {
-                        debugPrint('DateTimePickerを表示させる');
-                        _selectTime(context);
-                      },
-                      onTapOutside: (_) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                      },
+                      onTap: () => _selectTime(context),
                     ),
                   ),
                 ],

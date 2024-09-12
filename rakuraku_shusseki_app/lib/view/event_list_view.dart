@@ -1,11 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
 import 'package:rakuraku_shusseki_app/provider/event_list_state_notifier.dart';
 import 'package:rakuraku_shusseki_app/provider/route_observer_provider.dart';
 import 'package:rakuraku_shusseki_app/view/attendee_list_view/attendee_list_view.dart';
-import 'package:rakuraku_shusseki_app/view/event_creation_view.dart';
+import 'package:rakuraku_shusseki_app/view/event_creation_view/event_creation_view.dart';
 
 class EventListView extends ConsumerStatefulWidget {
   const EventListView({super.key});
@@ -193,27 +196,41 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
             // イベント追加画面に遷移
             debugPrint('イベント追加画面に遷移');
 
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              clipBehavior: Clip.none,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              builder: (BuildContext context) {
-                return Container(
-                  color: Colors.black,
-                  height: (screenSize.height * 0.7) +
-                      MediaQuery.of(context).viewInsets.bottom,
-                  child: const EventCreationView(
-                    isEventAddMode: true,
+            if (Platform.isIOS) {
+              showCupertinoModalBottomSheet(
+                context: context,
+                builder: (BuildContext context) {
+                  return SizedBox(
+                    height: (screenSize.height * 0.7) +
+                        MediaQuery.of(context).viewInsets.bottom,
+                    child: const EventCreationView(
+                      isEventAddMode: true,
+                    ),
+                  );
+                },
+              );
+            } else {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                clipBehavior: Clip.antiAlias,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
                   ),
-                );
-              },
-            );
+                ),
+                builder: (BuildContext context) {
+                  return SizedBox(
+                    height: (screenSize.height * 0.7) +
+                        MediaQuery.of(context).viewInsets.bottom,
+                    child: const EventCreationView(
+                      isEventAddMode: true,
+                    ),
+                  );
+                },
+              );
+            }
           },
           foregroundColor: Colors.white,
           backgroundColor: Colors.green.shade600,
