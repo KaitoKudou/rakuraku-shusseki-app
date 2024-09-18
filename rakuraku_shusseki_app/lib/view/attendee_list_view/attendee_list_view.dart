@@ -1,5 +1,8 @@
 // ignore_for_file: must_be_immutable
 
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/model/event.dart';
@@ -94,23 +97,34 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
                   ],
                 ),
                 onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AttendeeNameChangeDialog(
-                        previousName: attendee.name,
-                        updateAttendeeToEvent: (newName) async {
-                          await ref
-                              .read(attendeeListStateNotifierProvider.notifier)
-                              .changeAttendeeName(
-                                editingTargetEvent: widget.event,
-                                previousName: attendee.name,
-                                newName: newName,
-                              );
-                        },
-                      );
+                  final dialog = AttendeeNameChangeDialog(
+                    previousName: attendee.name,
+                    updateAttendeeToEvent: (newName) async {
+                      await ref
+                          .read(attendeeListStateNotifierProvider.notifier)
+                          .changeAttendeeName(
+                            editingTargetEvent: widget.event,
+                            previousName: attendee.name,
+                            newName: newName,
+                          );
                     },
                   );
+
+                  if (Platform.isIOS) {
+                    showCupertinoDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return dialog;
+                      },
+                    );
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return dialog;
+                      },
+                    );
+                  }
                 },
               ),
               Padding(
@@ -148,21 +162,32 @@ class _AttendeeListViewState extends ConsumerState<AttendeeListView> {
           IconButton(
             icon: const Icon(Icons.person_add),
             onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AttendeeAddDialog(
-                    addAttendeeToEvent: (newAttendee) async {
-                      await ref
-                          .read(attendeeListStateNotifierProvider.notifier)
-                          .addAttendeeToEvent(
-                            editingTargetEvent: widget.event,
-                            newAttendee: newAttendee,
-                          );
-                    },
-                  );
+              final dialog = AttendeeAddDialog(
+                addAttendeeToEvent: (newAttendee) async {
+                  await ref
+                      .read(attendeeListStateNotifierProvider.notifier)
+                      .addAttendeeToEvent(
+                        editingTargetEvent: widget.event,
+                        newAttendee: newAttendee,
+                      );
                 },
               );
+
+              if (Platform.isIOS) {
+                showCupertinoDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return dialog;
+                  },
+                );
+              } else {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return dialog;
+                  },
+                );
+              }
             },
           ),
         ],

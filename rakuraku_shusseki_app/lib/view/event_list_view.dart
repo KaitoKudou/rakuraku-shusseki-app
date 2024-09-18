@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -51,30 +52,60 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
   }
 
   // イベント削除確認ダイアログ
-  Future<void> showDeleteConfirmationDialog({required Event event}) async {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('イベントを削除しますか？'),
-          actions: [
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: const Text('削除'),
-              onPressed: () {
-                ref
-                    .read(eventListStateNotifierProvider.notifier)
-                    .deleteEvent(event: event);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
+  Future<void> _showDeleteConfirmationDialog({required Event event}) async {
+    void deleteAction() {
+      ref
+          .read(eventListStateNotifierProvider.notifier)
+          .deleteEvent(event: event);
+      Navigator.pop(context);
+    }
+
+    const title = 'イベントを削除しますか？';
+    const cancel = 'キャンセル';
+    const delete = '削除';
+    if (Platform.isIOS) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return CupertinoAlertDialog(
+              title: const Text(title),
+              actions: [
+                CupertinoDialogAction(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(cancel),
+                ),
+                CupertinoDialogAction(
+                  isDestructiveAction: true,
+                  child: const Text(delete),
+                  onPressed: () {
+                    deleteAction();
+                  },
+                ),
+              ],
+            );
+          });
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('イベントを削除しますか？'),
+            actions: [
+              TextButton(
+                child: const Text('キャンセル'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: const Text('削除'),
+                onPressed: () {
+                  deleteAction();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -136,7 +167,7 @@ class _EventListViewState extends ConsumerState<EventListView> with RouteAware {
                 ),
                 SlidableAction(
                   onPressed: (_) {
-                    showDeleteConfirmationDialog(event: event);
+                    _showDeleteConfirmationDialog(event: event);
                   },
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
