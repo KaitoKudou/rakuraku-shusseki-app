@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rakuraku_shusseki_app/provider/member_button_enabled_notifier.dart';
@@ -42,39 +45,68 @@ class _AttendeeNameChangeDialogState
   Widget build(BuildContext context) {
     const String title = '名前を変更';
     const String message = '変更したい名前を入力してください。';
+    const String change = '変更';
+    const String cancel = 'キャンセル';
     final isButtonEnabled = ref.watch(memberButtonEnabledNotifierProvider);
 
-    return AlertDialog(
-      title: const Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(message),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _controller,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          child: const Text('キャンセル'),
-          onPressed: () {
-            _controller.text = '';
-            Navigator.of(context).pop();
-          },
-        ),
-        TextButton(
-          onPressed: isButtonEnabled
-              ? () async {
-                  await widget.updateAttendeeToEvent(_controller.text);
-                  // ignore: use_build_context_synchronously
-                  Navigator.of(context).pop();
-                }
-              : null,
-          child: const Text('変更'),
-        ),
+    Future<void> changeAction() async {
+      await widget.updateAttendeeToEvent(_controller.text);
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+    }
+
+    void cancelAction() {
+      _controller.text = '';
+      Navigator.pop(context);
+    }
+
+    final dialogContent = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(message),
+        const SizedBox(height: 8),
+        Platform.isIOS
+            ? CupertinoTextField(controller: _controller)
+            : TextField(controller: _controller),
       ],
     );
+
+    return Platform.isIOS
+        ? CupertinoAlertDialog(
+            title: const Text(title),
+            content: dialogContent,
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => cancelAction(),
+                child: const Text(cancel),
+              ),
+              CupertinoDialogAction(
+                onPressed: isButtonEnabled
+                    ? () async {
+                        await changeAction();
+                      }
+                    : null,
+                child: const Text(change),
+              ),
+            ],
+          )
+        : AlertDialog(
+            title: const Text(title),
+            content: dialogContent,
+            actions: [
+              TextButton(
+                child: const Text(cancel),
+                onPressed: () => cancelAction(),
+              ),
+              TextButton(
+                onPressed: isButtonEnabled
+                    ? () async {
+                        await changeAction();
+                      }
+                    : null,
+                child: const Text(change),
+              ),
+            ],
+          );
   }
 }
